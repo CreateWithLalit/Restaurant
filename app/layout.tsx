@@ -9,15 +9,17 @@ import CartDrawer from "@/components/CartDrawer";
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
+  display: "swap",
 });
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  // ... existing metadata
+  metadataBase: new URL("https://restaurant-7uel.vercel.app"),
   title: "D-Dion | Authentic Flavors. Modern Experience.",
   description: "Experience the perfect blend of local ingredients and modern culinary techniques at D-Dion. A luxury dining experience awaits you in New Delhi.",
   keywords: ["restaurant", "luxury dining", "New Delhi", "D-Dion", "modern cuisine", "fine dining"],

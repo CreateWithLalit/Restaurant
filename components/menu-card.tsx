@@ -36,10 +36,10 @@ const MenuCard: React.FC<MenuCardProps> = ({
     }
 
     return (
-        <div className="group relative flex flex-col h-full bg-secondary/30 backdrop-blur-sm border border-accent/10 rounded-lg overflow-hidden transition-all duration-500 hover:border-accent/30 hover:shadow-[0_8px_32px_rgba(201,162,39,0.15)] hover:-translate-y-1">
+        <div className="group relative flex flex-col h-full bg-[#1a1814] border border-accent/10 rounded-lg overflow-hidden transition-transform duration-300 will-change-transform hover:border-accent/40 hover:-translate-y-1">
             {/* Availability Badge */}
             {!available && (
-                <div className="absolute top-4 right-4 z-10 bg-black/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">
+                <div className="absolute top-4 right-4 z-10 bg-black/90 text-white px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">
                     Sold Out
                 </div>
             )}
