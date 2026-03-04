@@ -6,6 +6,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "../../lib/supabase";
+import { MenuItem } from "../../lib/types";
 import ImageUpload from "./ImageUpload";
 
 // 1. Define the validation schema for a dish
@@ -24,7 +25,7 @@ type MenuItemFormValues = z.infer<typeof menuItemSchema>;
 const inputBase =
     "w-full rounded-md border border-[#F5F1E6]/10 bg-[#111111] px-4 py-3 text-sm text-[#F5F1E6] placeholder-[#F5F1E6]/30 transition-colors duration-200 focus:border-[#C9A227] focus:outline-none focus:ring-1 focus:ring-[#C9A227]/40";
 
-export default function MenuItemForm() {
+export default function MenuItemForm({ initialData }: { initialData?: MenuItem }) {
     const router = useRouter();
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -36,11 +37,12 @@ export default function MenuItemForm() {
     } = useForm<MenuItemFormValues>({
         resolver: zodResolver(menuItemSchema) as any,
         defaultValues: {
-            name: "",
-            category: "",
-            description: "",
-            available: true,
-            featured: false,
+            name: initialData?.name || "",
+            category: initialData?.category || "",
+            description: initialData?.description || "",
+            price: initialData ? initialData.price / 100 : 0,
+            available: initialData?.available ?? true,
+            featured: initialData?.featured ?? false,
         },
     });
 
@@ -72,18 +74,19 @@ export default function MenuItemForm() {
 
             // 2. Save dish to database
             const priceInCents = Math.round(data.price * 100);
+            const itemData = {
+                name: data.name,
+                category: data.category,
+                description: data.description || null,
+                price: priceInCents,
+                available: data.available,
+                featured: data.featured,
+                image_url: image_url || initialData?.image_url || null,
+            };
 
-            const { error } = await supabase.from("menu_items").insert([
-                {
-                    name: data.name,
-                    category: data.category,
-                    description: data.description || null,
-                    price: priceInCents,
-                    available: data.available,
-                    featured: data.featured,
-                    image_url: image_url,
-                },
-            ]);
+            const { error } = initialData?.id
+                ? await supabase.from("menu_items").update(itemData).eq("id", initialData.id)
+                : await supabase.from("menu_items").insert([itemData]);
 
             if (error) throw error;
 
@@ -175,7 +178,7 @@ export default function MenuItemForm() {
                     disabled={isSubmitting}
                     className="rounded-md bg-[#C9A227] px-6 py-2 text-sm font-semibold text-[#111111] transition-all hover:bg-[#F5F1E6] disabled:opacity-50"
                 >
-                    {isSubmitting ? "Saving..." : "Save Dish"}
+                    {isSubmitting ? "Saving..." : initialData?.id ? "Update Dish" : "Save Dish"}
                 </button>
             </div>
         </form>
