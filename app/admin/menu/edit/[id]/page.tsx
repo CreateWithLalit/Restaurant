@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import MenuItemForm from "@/components/admin/MenuItemForm";
 import { MenuItem } from "@/lib/types";
 
@@ -31,7 +32,19 @@ export default async function EditMenuItemPage({ params }: EditMenuItemPageProps
         .single();
 
     if (error || !item) {
-        notFound();
+        return (
+            <div className="p-8">
+                <h1 className="text-red-400">Error: Item not found</h1>
+                <p className="text-[#F5F1E6]/60">Received ID: "{id}"</p>
+                {error && <p className="text-[#F5F1E6]/40">Supabase Error: {error.message}</p>}
+                <Link
+                    href="/admin/menu"
+                    className="mt-4 inline-block rounded-md bg-[#C9A227] px-4 py-2 text-sm text-[#111111] font-semibold"
+                >
+                    Back to Menu
+                </Link>
+            </div>
+        );
     }
 
     return (
