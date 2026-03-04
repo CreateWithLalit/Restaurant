@@ -1,25 +1,17 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-
-// --- Types ---
-interface OrderItem {
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-}
+import { useCart } from "@/contexts/CartContext";
+import type { CartItem } from "@/contexts/CartContext";
+import Image from "next/image";
 
 // --- UPI App Data ---
 const UPI_APPS = [
     {
         id: "gpay",
         name: "Google Pay",
-        packageName: "com.google.android.apps.nbu.paisa.user",
-        color: "#4285F4",
-        gradient: "from-blue-500 to-blue-700",
         icon: (
             <svg viewBox="0 0 48 48" fill="none" className="w-8 h-8">
                 <path d="M24.5 20.5H38.5C39.3 22.9 39.3 25.1 38.5 27.5H24.5V20.5Z" fill="#4285F4" />
@@ -32,9 +24,6 @@ const UPI_APPS = [
     {
         id: "phonepe",
         name: "PhonePe",
-        packageName: "com.phonepe.app",
-        color: "#6739B7",
-        gradient: "from-purple-600 to-purple-800",
         icon: (
             <svg viewBox="0 0 48 48" fill="none" className="w-8 h-8">
                 <rect width="48" height="48" rx="12" fill="#6739B7" />
@@ -45,9 +34,6 @@ const UPI_APPS = [
     {
         id: "paytm",
         name: "Paytm",
-        packageName: "net.one97.paytm",
-        color: "#00BAF2",
-        gradient: "from-cyan-400 to-blue-500",
         icon: (
             <svg viewBox="0 0 48 48" fill="none" className="w-8 h-8">
                 <rect width="48" height="48" rx="12" fill="#00BAF2" />
@@ -57,63 +43,7 @@ const UPI_APPS = [
     },
 ];
 
-// --- Sub-Components ---
-function OrderSummary({ items, tableNumber, customerName }: { items: OrderItem[], tableNumber: string, customerName: string }) {
-    const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const gst = Math.round(total * 0.05);
-    const grandTotal = total + gst;
-
-    return (
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-fit">
-            <h3 className="text-[#C9A227] font-semibold text-sm tracking-widest uppercase mb-4">
-                Order Summary
-            </h3>
-
-            <div className="flex gap-4 mb-5">
-                <div className="flex-1 bg-white/5 rounded-xl px-4 py-3 text-center">
-                    <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Table</p>
-                    <p className="text-white font-bold text-lg">{tableNumber}</p>
-                </div>
-                <div className="flex-1 bg-white/5 rounded-xl px-4 py-3 text-center">
-                    <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Guest</p>
-                    <p className="text-white font-bold text-lg truncate">{customerName}</p>
-                </div>
-            </div>
-
-            <div className="space-y-3 mb-5">
-                {items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className="bg-[#C9A227]/20 text-[#C9A227] text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                ×{item.quantity}
-                            </span>
-                            <span className="text-white/80 text-sm">{item.name}</span>
-                        </div>
-                        <span className="text-white/70 text-sm font-medium">
-                            ₹{((item.price * item.quantity) / 100).toFixed(2)}
-                        </span>
-                    </div>
-                ))}
-            </div>
-
-            <div className="border-t border-white/10 pt-4 space-y-2">
-                <div className="flex justify-between text-sm text-white/50">
-                    <span>Subtotal</span>
-                    <span>₹{(total / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-white/50">
-                    <span>GST (5%)</span>
-                    <span>₹{(gst / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-base font-bold text-white mt-2 pt-2 border-t border-white/10">
-                    <span>Total Payable</span>
-                    <span className="text-[#C9A227]">₹{(grandTotal / 100).toFixed(2)}</span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
+// --- Processing Overlay ---
 function ProcessingOverlay({ visible }: { visible: boolean }) {
     if (!visible) return null;
     return (
@@ -131,12 +61,43 @@ function ProcessingOverlay({ visible }: { visible: boolean }) {
             <p className="text-white/40 text-sm">Please do not close this window</p>
             <div className="mt-6 flex gap-1">
                 {[0, 1, 2].map((i) => (
-                    <div
-                        key={i}
-                        className="w-2 h-2 rounded-full bg-[#C9A227] animate-bounce"
-                        style={{ animationDelay: `${i * 0.15}s` }}
-                    />
+                    <div key={i} className="w-2 h-2 rounded-full bg-[#C9A227] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
+            </div>
+        </div>
+    );
+}
+
+// --- Cart Item Row with Remove ---
+function CartItemRow({ item, onRemove, onIncrement, onDecrement }: {
+    item: CartItem;
+    onRemove: (id: string) => void;
+    onIncrement: (id: string) => void;
+    onDecrement: (id: string) => void;
+}) {
+    return (
+        <div className="flex items-center gap-4 bg-white/5 rounded-xl p-3 border border-white/5">
+            {item.image_url && (
+                <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+                    <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+                </div>
+            )}
+            <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold truncate">{item.name}</p>
+                <p className="text-[#C9A227] text-xs">₹{(item.price / 100).toFixed(2)} each</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                    <button onClick={() => onDecrement(item.id)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-red-500/20 hover:text-red-400 text-white flex items-center justify-center text-sm font-bold transition-colors">−</button>
+                    <span className="text-white text-sm font-bold w-5 text-center">{item.quantity}</span>
+                    <button onClick={() => onIncrement(item.id)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-[#C9A227]/30 hover:text-[#C9A227] text-white flex items-center justify-center text-sm font-bold transition-colors">+</button>
+                </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+                <p className="text-white font-semibold text-sm">₹{((item.price * item.quantity) / 100).toFixed(2)}</p>
+                <button onClick={() => onRemove(item.id)} className="text-white/20 hover:text-red-400 transition-colors" aria-label={`Remove ${item.name}`}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
             </div>
         </div>
     );
@@ -144,48 +105,41 @@ function ProcessingOverlay({ visible }: { visible: boolean }) {
 
 // --- Main Page ---
 function PaymentPageContent() {
-    const searchParams = useSearchParams();
+    const { state, removeItem, increment, decrement, clearCart } = useCart();
     const router = useRouter();
 
-    // State for Customer Info
-    const [guestName, setGuestName] = useState(searchParams.get("name") || "");
-    const [tableNumber, setTableNumber] = useState(searchParams.get("table") || "");
+    const [guestName, setGuestName] = useState("");
+    const [tableNumber, setTableNumber] = useState("");
     const [infoError, setInfoError] = useState("");
-
     const [upiId, setUpiId] = useState("");
     const [upiError, setUpiError] = useState("");
     const [selectedApp, setSelectedApp] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-    // Parse data from query params (or use sample data)
-    const rawItems = searchParams.get("items");
-
-    const orderItems: OrderItem[] = rawItems
-        ? JSON.parse(decodeURIComponent(rawItems))
-        : [
-            { id: "1", name: "Butter Chicken", price: 34900, quantity: 2 },
-            { id: "2", name: "Garlic Naan", price: 8900, quantity: 3 },
-            { id: "3", name: "Mango Lassi", price: 12900, quantity: 2 },
-        ];
-
-    const grandTotal = orderItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
-    const gst = Math.round(grandTotal * 0.05);
-    const amountInPaise = grandTotal + gst;
-    const amountInRupees = (amountInPaise / 100).toFixed(2);
+    // Use cart context items
+    const orderItems = state.items;
+    const subtotal = orderItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
+    const gst = Math.round(subtotal * 0.05);
+    const grandTotal = subtotal + gst;
+    const amountInRupees = (grandTotal / 100).toFixed(2);
 
     function validateCustomerInfo() {
         if (!guestName.trim() || !tableNumber.trim()) {
             setInfoError("Guest Name and Table Number are mandatory.");
             return false;
         }
+        if (orderItems.length === 0) {
+            setInfoError("Your cart is empty. Please add items before paying.");
+            return false;
+        }
         setInfoError("");
         return true;
     }
 
-    function buildUpiUrl(upiApp: typeof UPI_APPS[0]) {
+    function buildUpiUrl() {
         const params = new URLSearchParams({
-            pa: "restaurant@upi", // Merchant UPI ID — replace with real one
+            pa: "restaurant@upi",
             pn: "D-Dion Restaurant",
             am: amountInRupees,
             cu: "INR",
@@ -194,19 +148,12 @@ function PaymentPageContent() {
         return `upi://pay?${params.toString()}`;
     }
 
-    function handleAppPay(app: typeof UPI_APPS[0]) {
+    function handleAppPay(appId: string) {
         if (!validateCustomerInfo()) return;
-
-        setSelectedApp(app.id);
+        setSelectedApp(appId);
         setIsProcessing(true);
-        const upiUrl = buildUpiUrl(app);
-        window.location.href = upiUrl;
-
-        // Fallback after 3s (desktop or unsupported)
-        setTimeout(() => {
-            setIsProcessing(false);
-            setSelectedApp(null);
-        }, 3000);
+        window.location.href = buildUpiUrl();
+        setTimeout(() => { setIsProcessing(false); setSelectedApp(null); }, 3000);
     }
 
     function validateUpiId(id: string) {
@@ -215,19 +162,10 @@ function PaymentPageContent() {
 
     function handleManualPay() {
         if (!validateCustomerInfo()) return;
-
-        if (!validateUpiId(upiId)) {
-            setUpiError("Please enter a valid UPI ID (e.g., name@bank)");
-            return;
-        }
+        if (!validateUpiId(upiId)) { setUpiError("Please enter a valid UPI ID (e.g., name@bank)"); return; }
         setUpiError("");
         setIsProcessing(true);
-
-        // Simulate payment processing
-        setTimeout(() => {
-            setIsProcessing(false);
-            setPaymentSuccess(true);
-        }, 3000);
+        setTimeout(() => { setIsProcessing(false); setPaymentSuccess(true); clearCart(); }, 3000);
     }
 
     if (paymentSuccess) {
@@ -240,11 +178,9 @@ function PaymentPageContent() {
                         </svg>
                     </div>
                     <h2 className="text-white text-3xl font-bold mb-2">Payment Successful!</h2>
-                    <p className="text-white/50 mb-8">Your order has been confirmed, {guestName}. Bon appétit! 🍽️</p>
-                    <Link
-                        href="/"
-                        className="bg-[#C9A227] text-black font-bold px-8 py-3 rounded-full hover:bg-[#e8b92c] transition-colors duration-300 inline-block"
-                    >
+                    <p className="text-white/50 mb-2">Your order has been confirmed, <span className="text-[#C9A227] font-semibold">{guestName}</span>!</p>
+                    <p className="text-white/30 text-sm mb-8">Table {tableNumber} · Your food is being prepared 🍽️</p>
+                    <Link href="/" className="bg-[#C9A227] text-black font-bold px-8 py-3 rounded-full hover:bg-[#e8b92c] transition-colors duration-300 inline-block">
                         Back to Home
                     </Link>
                 </div>
@@ -255,13 +191,10 @@ function PaymentPageContent() {
     return (
         <div className="min-h-screen bg-[#0d0b08] relative overflow-hidden">
             <ProcessingOverlay visible={isProcessing} />
-
-            {/* Decorative blobs */}
             <div className="absolute top-[-10rem] left-[-10rem] w-[30rem] h-[30rem] bg-[#C9A227]/5 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-[-10rem] right-[-10rem] w-[30rem] h-[30rem] bg-purple-900/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 max-w-6xl mx-auto px-4 py-10 sm:px-6">
-
                 {/* Header */}
                 <div className="mb-10">
                     <button onClick={() => router.back()} className="flex items-center gap-2 text-white/40 hover:text-[#C9A227] transition-colors text-sm mb-6 group">
@@ -275,25 +208,20 @@ function PaymentPageContent() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
                     {/* Left: Payment Panel */}
                     <div className="lg:col-span-3 space-y-5">
 
-                        {/* Customer Info Section (NEW) */}
+                        {/* Customer Info */}
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
                             <h3 className="text-white font-semibold mb-1">Customer Details</h3>
                             <p className="text-white/40 text-sm mb-5">Please provide your name and table number</p>
-
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-white/40 text-[10px] uppercase tracking-widest mb-1.5 block ml-1">Guest Name *</label>
                                     <input
                                         type="text"
                                         value={guestName}
-                                        onChange={(e) => {
-                                            setGuestName(e.target.value);
-                                            if (e.target.value.trim() && tableNumber.trim()) setInfoError("");
-                                        }}
+                                        onChange={(e) => { setGuestName(e.target.value); if (e.target.value.trim() && tableNumber.trim()) setInfoError(""); }}
                                         placeholder="Enter your name"
                                         className={`w-full bg-white/5 border ${infoError && !guestName.trim() ? "border-red-500/50" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C9A227]/50 transition-all`}
                                     />
@@ -303,19 +231,15 @@ function PaymentPageContent() {
                                     <input
                                         type="text"
                                         value={tableNumber}
-                                        onChange={(e) => {
-                                            setTableNumber(e.target.value);
-                                            if (e.target.value.trim() && guestName.trim()) setInfoError("");
-                                        }}
+                                        onChange={(e) => { setTableNumber(e.target.value); if (e.target.value.trim() && guestName.trim()) setInfoError(""); }}
                                         placeholder="e.g. A-01"
                                         className={`w-full bg-white/5 border ${infoError && !tableNumber.trim() ? "border-red-500/50" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C9A227]/50 transition-all`}
                                     />
                                 </div>
                             </div>
-
                             {infoError && (
                                 <p className="text-red-400/80 text-xs mt-3 flex items-center gap-1 ml-1">
-                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                    <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                                     {infoError}
                                 </p>
                             )}
@@ -326,6 +250,7 @@ function PaymentPageContent() {
                             <div>
                                 <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Amount Due</p>
                                 <p className="text-[#C9A227] text-4xl font-bold tracking-tight">₹{amountInRupees}</p>
+                                <p className="text-white/30 text-xs mt-1">{orderItems.length} item{orderItems.length !== 1 ? "s" : ""} · incl. 5% GST</p>
                             </div>
                             <div className="bg-[#C9A227]/10 rounded-full p-4">
                                 <svg className="w-8 h-8 text-[#C9A227]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -338,22 +263,16 @@ function PaymentPageContent() {
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
                             <h3 className="text-white font-semibold mb-1">Pay with UPI App</h3>
                             <p className="text-white/40 text-sm mb-5">Tap to open your preferred UPI app</p>
-
                             <div className="grid grid-cols-3 gap-3">
                                 {UPI_APPS.map((app) => (
                                     <button
                                         key={app.id}
-                                        onClick={() => handleAppPay(app)}
+                                        onClick={() => handleAppPay(app.id)}
                                         disabled={isProcessing}
                                         className={`group relative flex flex-col items-center gap-3 p-4 rounded-xl border transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
-                      ${selectedApp === app.id
-                                                ? "border-[#C9A227]/60 bg-[#C9A227]/10 shadow-[0_0_20px_rgba(201,162,39,0.2)]"
-                                                : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10"
-                                            }`}
+                      ${selectedApp === app.id ? "border-[#C9A227]/60 bg-[#C9A227]/10 shadow-[0_0_20px_rgba(201,162,39,0.2)]" : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10"}`}
                                     >
-                                        <div className="transition-transform duration-300 group-hover:scale-110">
-                                            {app.icon}
-                                        </div>
+                                        <div className="transition-transform duration-300 group-hover:scale-110">{app.icon}</div>
                                         <span className="text-white/70 text-xs font-medium group-hover:text-white transition-colors">{app.name}</span>
                                     </button>
                                 ))}
@@ -364,62 +283,103 @@ function PaymentPageContent() {
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
                             <h3 className="text-white font-semibold mb-1">Pay with UPI ID</h3>
                             <p className="text-white/40 text-sm mb-5">Enter your UPI ID to pay directly</p>
-
                             <div className="relative mb-3">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <span className="text-white/30 text-sm">@</span>
-                                </div>
+                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none"><span className="text-white/30 text-sm">@</span></div>
                                 <input
                                     type="text"
                                     value={upiId}
-                                    onChange={(e) => {
-                                        setUpiId(e.target.value);
-                                        setUpiError("");
-                                    }}
+                                    onChange={(e) => { setUpiId(e.target.value); setUpiError(""); }}
                                     placeholder="yourname@bankname"
                                     className={`w-full bg-white/5 border ${upiError ? "border-red-500/50" : "border-white/10"} rounded-xl pl-8 pr-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C9A227]/50 focus:ring-1 focus:ring-[#C9A227]/20 transition-all duration-200`}
                                 />
                             </div>
-
                             {upiError && (
                                 <p className="text-red-400/80 text-xs mb-3 flex items-center gap-1">
                                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                                     {upiError}
                                 </p>
                             )}
-
                             <button
                                 onClick={handleManualPay}
                                 disabled={!upiId || isProcessing}
                                 className="w-full bg-[#C9A227] hover:bg-[#e8b92c] disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-[0_0_25px_rgba(201,162,39,0.4)] active:scale-[0.98] text-sm tracking-wide"
                             >
-                                Verify & Pay ₹{amountInRupees}
+                                Verify &amp; Pay ₹{amountInRupees}
                             </button>
-
                             <p className="text-white/20 text-xs text-center mt-4 flex items-center justify-center gap-1">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                 256-bit SSL encrypted · Powered by UPI
                             </p>
                         </div>
                     </div>
 
                     {/* Right: Order Summary */}
-                    <div className="lg:col-span-2">
-                        <OrderSummary
-                            items={orderItems}
-                            tableNumber={tableNumber || "---"}
-                            customerName={guestName || "---"}
-                        />
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-[#C9A227] font-semibold text-sm tracking-widest uppercase">Order Summary</h3>
+                                {orderItems.length > 0 && (
+                                    <button onClick={() => router.back()} className="text-white/30 hover:text-[#C9A227] text-xs transition-colors flex items-center gap-1">
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                        Add more
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Table + Guest info preview */}
+                            <div className="flex gap-3 mb-5">
+                                <div className="flex-1 bg-white/5 rounded-xl px-3 py-2.5 text-center">
+                                    <p className="text-white/40 text-[10px] uppercase tracking-widest mb-0.5">Table</p>
+                                    <p className="text-white font-bold text-base">{tableNumber || "---"}</p>
+                                </div>
+                                <div className="flex-1 bg-white/5 rounded-xl px-3 py-2.5 text-center">
+                                    <p className="text-white/40 text-[10px] uppercase tracking-widest mb-0.5">Guest</p>
+                                    <p className="text-white font-bold text-base truncate">{guestName || "---"}</p>
+                                </div>
+                            </div>
+
+                            {/* Items list */}
+                            {orderItems.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-white/30 text-sm">Cart is empty</p>
+                                    <button onClick={() => router.back()} className="mt-3 text-[#C9A227] text-xs hover:underline">Browse Menu →</button>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 mb-5">
+                                    {orderItems.map((item) => (
+                                        <CartItemRow
+                                            key={item.id}
+                                            item={item}
+                                            onRemove={removeItem}
+                                            onIncrement={increment}
+                                            onDecrement={decrement}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Totals */}
+                            {orderItems.length > 0 && (
+                                <div className="border-t border-white/10 pt-4 space-y-2">
+                                    <div className="flex justify-between text-sm text-white/50">
+                                        <span>Subtotal</span>
+                                        <span>₹{(subtotal / 100).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-white/50">
+                                        <span>GST (5%)</span>
+                                        <span>₹{(gst / 100).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-base font-bold text-white pt-2 border-t border-white/10">
+                                        <span>Total Payable</span>
+                                        <span className="text-[#C9A227]">₹{amountInRupees}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Trust badges */}
-                        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                            {[
-                                { icon: "🔒", label: "Secure" },
-                                { icon: "⚡", label: "Instant" },
-                                { icon: "✅", label: "Verified" },
-                            ].map((badge) => (
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            {[{ icon: "🔒", label: "Secure" }, { icon: "⚡", label: "Instant" }, { icon: "✅", label: "Verified" }].map((badge) => (
                                 <div key={badge.label} className="bg-white/5 border border-white/5 rounded-xl py-3">
                                     <div className="text-lg mb-1">{badge.icon}</div>
                                     <div className="text-white/40 text-[10px] uppercase tracking-widest">{badge.label}</div>
