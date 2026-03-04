@@ -47,7 +47,7 @@ export default async function Home() {
       <HeroSection
         restaurantName={brandName}
         tagline={tagline}
-        backgroundImage="https://images.unsplash.com/photo-1557955776-857434f1c951?w=3000"
+        backgroundImage="https://images.unsplash.com/photo-1557955776-857434f1c951?w=4000&q=100"
       />
       <AboutSection
         aboutText={settings?.about_text || "Welcome to D-Dion..."}

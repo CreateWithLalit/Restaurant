@@ -38,7 +38,7 @@ export default function HeroSection({
                         alt="Hero Background"
                         fill
                         priority
-                        quality={90}
+                        quality={100}
                         className="object-cover"
                     />
                 </div>
