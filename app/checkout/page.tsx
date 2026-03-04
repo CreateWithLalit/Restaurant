@@ -146,6 +146,11 @@ function PaymentPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
+    // State for Customer Info
+    const [guestName, setGuestName] = useState(searchParams.get("name") || "");
+    const [tableNumber, setTableNumber] = useState(searchParams.get("table") || "");
+    const [infoError, setInfoError] = useState("");
+
     const [upiId, setUpiId] = useState("");
     const [upiError, setUpiError] = useState("");
     const [selectedApp, setSelectedApp] = useState<string | null>(null);
@@ -153,8 +158,6 @@ function PaymentPageContent() {
     const [paymentSuccess, setPaymentSuccess] = useState(false);
 
     // Parse data from query params (or use sample data)
-    const tableNumber = searchParams.get("table") || "A-04";
-    const customerName = searchParams.get("name") || "Guest";
     const rawItems = searchParams.get("items");
 
     const orderItems: OrderItem[] = rawItems
@@ -170,18 +173,29 @@ function PaymentPageContent() {
     const amountInPaise = grandTotal + gst;
     const amountInRupees = (amountInPaise / 100).toFixed(2);
 
+    function validateCustomerInfo() {
+        if (!guestName.trim() || !tableNumber.trim()) {
+            setInfoError("Guest Name and Table Number are mandatory.");
+            return false;
+        }
+        setInfoError("");
+        return true;
+    }
+
     function buildUpiUrl(upiApp: typeof UPI_APPS[0]) {
         const params = new URLSearchParams({
             pa: "restaurant@upi", // Merchant UPI ID — replace with real one
             pn: "D-Dion Restaurant",
             am: amountInRupees,
             cu: "INR",
-            tn: `Order by ${customerName} - Table ${tableNumber}`,
+            tn: `Order by ${guestName} - Table ${tableNumber}`,
         });
         return `upi://pay?${params.toString()}`;
     }
 
     function handleAppPay(app: typeof UPI_APPS[0]) {
+        if (!validateCustomerInfo()) return;
+
         setSelectedApp(app.id);
         setIsProcessing(true);
         const upiUrl = buildUpiUrl(app);
@@ -199,6 +213,8 @@ function PaymentPageContent() {
     }
 
     function handleManualPay() {
+        if (!validateCustomerInfo()) return;
+
         if (!validateUpiId(upiId)) {
             setUpiError("Please enter a valid UPI ID (e.g., name@bank)");
             return;
@@ -223,7 +239,7 @@ function PaymentPageContent() {
                         </svg>
                     </div>
                     <h2 className="text-white text-3xl font-bold mb-2">Payment Successful!</h2>
-                    <p className="text-white/50 mb-8">Your order has been confirmed. Bon appétit! 🍽️</p>
+                    <p className="text-white/50 mb-8">Your order has been confirmed, {guestName}. Bon appétit! 🍽️</p>
                     <button
                         onClick={() => router.push("/")}
                         className="bg-[#C9A227] text-black font-bold px-8 py-3 rounded-full hover:bg-[#e8b92c] transition-colors duration-300"
@@ -261,6 +277,48 @@ function PaymentPageContent() {
 
                     {/* Left: Payment Panel */}
                     <div className="lg:col-span-3 space-y-5">
+
+                        {/* Customer Info Section (NEW) */}
+                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+                            <h3 className="text-white font-semibold mb-1">Customer Details</h3>
+                            <p className="text-white/40 text-sm mb-5">Please provide your name and table number</p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-white/40 text-[10px] uppercase tracking-widest mb-1.5 block ml-1">Guest Name *</label>
+                                    <input
+                                        type="text"
+                                        value={guestName}
+                                        onChange={(e) => {
+                                            setGuestName(e.target.value);
+                                            if (e.target.value.trim() && tableNumber.trim()) setInfoError("");
+                                        }}
+                                        placeholder="Enter your name"
+                                        className={`w-full bg-white/5 border ${infoError && !guestName.trim() ? "border-red-500/50" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C9A227]/50 transition-all`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-white/40 text-[10px] uppercase tracking-widest mb-1.5 block ml-1">Table Number *</label>
+                                    <input
+                                        type="text"
+                                        value={tableNumber}
+                                        onChange={(e) => {
+                                            setTableNumber(e.target.value);
+                                            if (e.target.value.trim() && guestName.trim()) setInfoError("");
+                                        }}
+                                        placeholder="e.g. A-01"
+                                        className={`w-full bg-white/5 border ${infoError && !tableNumber.trim() ? "border-red-500/50" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C9A227]/50 transition-all`}
+                                    />
+                                </div>
+                            </div>
+
+                            {infoError && (
+                                <p className="text-red-400/80 text-xs mt-3 flex items-center gap-1 ml-1">
+                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                    {infoError}
+                                </p>
+                            )}
+                        </div>
 
                         {/* Amount Banner */}
                         <div className="bg-gradient-to-r from-[#C9A227]/20 to-[#C9A227]/5 border border-[#C9A227]/30 rounded-2xl p-6 flex items-center justify-between">
@@ -350,8 +408,8 @@ function PaymentPageContent() {
                     <div className="lg:col-span-2">
                         <OrderSummary
                             items={orderItems}
-                            tableNumber={tableNumber}
-                            customerName={customerName}
+                            tableNumber={tableNumber || "---"}
+                            customerName={guestName || "---"}
                         />
 
                         {/* Trust badges */}
