@@ -1,13 +1,16 @@
+import dynamic from "next/dynamic";
 import Navbar from "@/components/sections/Navbar";
 import HeroSection from "@/components/sections/HeroSection";
 import AboutSection from "@/components/sections/AboutSection";
 import MenuSection from "@/components/sections/MenuSection";
 import WhyUsSection from "@/components/sections/WhyUsSection";
-import BookingForm from "@/components/sections/BookingForm";
-import MapSection from "@/components/sections/MapSection";
-import Footer from "@/components/sections/Footer";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+
+// Lazy load below-the-fold components
+const BookingForm = dynamic(() => import("@/components/sections/BookingForm"));
+const MapSection = dynamic(() => import("@/components/sections/MapSection"));
+const Footer = dynamic(() => import("@/components/sections/Footer"));
 
 export default async function Home() {
   const cookieStore = await cookies();

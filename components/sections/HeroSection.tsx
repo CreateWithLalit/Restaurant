@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback } from "react"
+import Image from "next/image"
 
 interface HeroSectionProps {
     restaurantName: string
@@ -29,13 +30,18 @@ export default function HeroSection({
             id="home"
             className="relative flex h-screen min-h-[600px] items-center justify-center overflow-hidden"
         >
-            {/* Background — image or gradient fallback */}
+            {/* Background — optimized image or gradient fallback */}
             {backgroundImage ? (
-                <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url(${backgroundImage})` }}
-                    aria-hidden="true"
-                />
+                <div className="absolute inset-0 z-0">
+                    <Image
+                        src={backgroundImage}
+                        alt="Hero Background"
+                        fill
+                        priority
+                        quality={90}
+                        className="object-cover"
+                    />
+                </div>
             ) : (
                 <div
                     className="absolute inset-0 bg-gradient-to-b from-[#111111] via-[#1a1812] to-[#111111]"

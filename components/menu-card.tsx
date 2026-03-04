@@ -35,7 +35,6 @@ const MenuCard: React.FC<MenuCardProps> = ({
                     src={image_url || "/placeholder-food.jpg"}
                     alt={name}
                     fill
-                    unoptimized
                     className={`object-cover transition-transform duration-700 group-hover:scale-110 ${!available ? "grayscale opacity-50" : ""}`}
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />

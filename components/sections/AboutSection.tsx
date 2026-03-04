@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import Image from "next/image"
 
 interface AboutSectionProps {
     aboutText: string
@@ -54,10 +55,12 @@ export default function AboutSection({
                 <div className="scroll-fade w-full flex-shrink-0 lg:w-[45%]">
                     <div className="relative mx-auto aspect-[4/5] max-w-md overflow-hidden rounded-lg border-2 border-[#C9A227]/40 lg:mx-0">
                         {imageUrl ? (
-                            <img
+                            <Image
                                 src={imageUrl}
                                 alt="Inside the La Maison restaurant"
-                                className="h-full w-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 1024px) 100vw, 45vw"
                             />
                         ) : (
                             <div
