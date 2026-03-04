@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 // --- Types ---
 interface OrderItem {
@@ -240,12 +241,12 @@ function PaymentPageContent() {
                     </div>
                     <h2 className="text-white text-3xl font-bold mb-2">Payment Successful!</h2>
                     <p className="text-white/50 mb-8">Your order has been confirmed, {guestName}. Bon appétit! 🍽️</p>
-                    <button
-                        onClick={() => router.push("/")}
-                        className="bg-[#C9A227] text-black font-bold px-8 py-3 rounded-full hover:bg-[#e8b92c] transition-colors duration-300"
+                    <Link
+                        href="/"
+                        className="bg-[#C9A227] text-black font-bold px-8 py-3 rounded-full hover:bg-[#e8b92c] transition-colors duration-300 inline-block"
                     >
                         Back to Home
-                    </button>
+                    </Link>
                 </div>
             </div>
         );
