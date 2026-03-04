@@ -30,14 +30,14 @@ const MenuCard: React.FC<MenuCardProps> = ({
             )}
 
             {/* Image Container */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden">
+            <div className="relative aspect-[3/2] w-full overflow-hidden">
                 <Image
                     src={image_url || "/placeholder-food.jpg"}
                     alt={name}
                     fill
                     unoptimized
                     className={`object-cover transition-transform duration-700 group-hover:scale-110 ${!available ? "grayscale opacity-50" : ""}`}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-transparent opacity-60" />
 
@@ -50,22 +50,22 @@ const MenuCard: React.FC<MenuCardProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex flex-col flex-grow p-6">
-                <div className="flex justify-between items-start gap-4 mb-3">
-                    <h3 className="font-heading text-xl text-cream group-hover:text-accent transition-colors duration-300 line-clamp-1">
+            <div className="flex flex-col flex-grow p-3 sm:p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-1 sm:gap-4 mb-2 sm:mb-3">
+                    <h3 className="font-heading text-base sm:text-lg md:text-xl text-cream group-hover:text-accent transition-colors duration-300 line-clamp-1">
                         {name}
                     </h3>
-                    <span className="font-heading text-lg font-medium text-accent">
+                    <span className="font-heading text-sm sm:text-base md:text-lg font-medium text-accent">
                         ₹{(price / 100).toFixed(2)}
                     </span>
                 </div>
 
-                <p className="text-secondary-foreground/70 text-sm leading-relaxed mb-6 line-clamp-2 italic font-body">
+                <p className="text-secondary-foreground/70 text-[10px] sm:text-xs md:text-sm leading-relaxed mb-4 sm:mb-6 line-clamp-2 italic font-body">
                     {description}
                 </p>
 
                 {/* Action / Interaction */}
-                <div className="mt-auto pt-4 border-t border-accent/5 flex items-center justify-between">
+                <div className="mt-auto pt-2 sm:pt-4 border-t border-accent/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((s) => (
                             <span key={s} className="text-accent text-xs">★</span>
