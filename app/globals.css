@@ -1,32 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0D0B08;
+  --foreground: #F5F0E6;
+  --gold: #C9A227;
+  --gold-light: #E8B92C;
+  --gold-dark: #8B6B3E;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-accent: var(--gold);
+
+  --font-heading: var(--font-playfair);
+  --font-body: var(--font-outfit);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    background-color: #0D0B08;
+    color: #F5F0E6;
+    font-family: var(--font-outfit), sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-playfair), serif;
+    letter-spacing: -0.02em;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer utilities {
+  .text-gold-metallic {
+    background-image: linear-gradient(135deg,
+        #8B6B3E 0%,
+        #C9A227 25%,
+        #F5F0E6 50%,
+        #C9A227 75%,
+        #8B6B3E 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-gold-metallic {
+    background: linear-gradient(135deg, #8B6B3E 0%, #C9A227 50%, #8B6B3E 100%);
+    box-shadow: 0 4px 15px rgba(201, 162, 39, 0.3);
+  }
+
+  .glass-main {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .glass-light {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .hover-lift {
+    transition: all 0.5s ease-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .hover-glow {
+    transition: all 0.5s ease-out;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.2);
+    border-color: rgba(201, 162, 39, 0.4);
+  }
 }
 
-/* Lenis smooth scrolling styles */
+/* Lenis smooth scrolling */
 html.lenis,
 html.lenis body {
   height: auto;

@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Playfair_Display, Outfit } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import { CartProvider } from "@/contexts/CartContext";
 import CartButton from "@/components/CartButton";
 import CartDrawer from "@/components/CartDrawer";
 
-const inter = Inter({ subsets: ["latin"] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
 
 export const metadata: Metadata = {
   // ... existing metadata
@@ -44,8 +52,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${inter.className} antialiased`}>
+    <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
+      <body className={`${playfair.variable} ${outfit.variable} font-body antialiased`}>
         <CartProvider>
           <SmoothScroll>
             {children}
