@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import SmoothScroll from "@/components/SmoothScroll";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  // ... existing metadata
   title: "D-Dion | Authentic Flavors. Modern Experience.",
   description: "Experience the perfect blend of local ingredients and modern culinary techniques at D-Dion. A luxury dining experience awaits you in New Delhi.",
   keywords: ["restaurant", "luxury dining", "New Delhi", "D-Dion", "modern cuisine", "fine dining"],
@@ -36,8 +41,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className="scroll-smooth">
+      <body className={`${inter.className} antialiased`}>
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
+      </body>
     </html>
   );
 }
