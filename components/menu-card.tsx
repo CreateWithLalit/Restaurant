@@ -2,8 +2,10 @@
 
 import React from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 interface MenuCardProps {
+    id?: string
     name: string
     description: string
     price: number
@@ -13,6 +15,7 @@ interface MenuCardProps {
 }
 
 const MenuCard: React.FC<MenuCardProps> = ({
+    id,
     name,
     description,
     price,
@@ -20,6 +23,12 @@ const MenuCard: React.FC<MenuCardProps> = ({
     image_url,
     available,
 }) => {
+    const router = useRouter()
+
+    function handleOrder() {
+        const items = encodeURIComponent(JSON.stringify([{ id: id || "1", name, price, quantity: 1 }]))
+        router.push(`/checkout?table=A-01&name=Guest&items=${items}`)
+    }
     return (
         <div className="group relative flex flex-col h-full bg-secondary/30 backdrop-blur-sm border border-accent/10 rounded-lg overflow-hidden transition-all duration-500 hover:border-accent/30 hover:shadow-[0_8px_32px_rgba(201,162,39,0.15)] hover:-translate-y-1">
             {/* Availability Badge */}
@@ -72,6 +81,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
                     </div>
                     <button
                         disabled={!available}
+                        onClick={handleOrder}
                         className={`text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 ${available
                             ? "text-accent hover:text-white flex items-center gap-2"
                             : "text-white/20"

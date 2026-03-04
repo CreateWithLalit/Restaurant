@@ -122,6 +122,7 @@ export default function MenuSection({ items }: MenuSectionProps) {
                             style={{ transitionDelay: `${250 + index * 80}ms` }}
                         >
                             <MenuCard
+                                id={item.id}
                                 name={item.name}
                                 description={item.description}
                                 price={item.price}
