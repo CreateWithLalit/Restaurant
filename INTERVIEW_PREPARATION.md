@@ -604,7 +604,7 @@ Examples from the project:
    `useCallback` for cart dispatch functions prevents unnecessary re-renders in the component tree.
 
 7. **Font Optimization:**
-   Google Fonts loaded via Next.js Font module with `font-display: swap` to prevent Flash of Invisible Text (FOIT).
+   Google Fonts loaded via Next.js Font module with `font-display: swap` to avoid Flash of Invisible Text (FOIT) — text is shown immediately in a fallback font while custom fonts load, preventing invisible text.
 
 8. **Middleware Matcher:**
    The middleware config excludes static assets (`_next/static`, `_next/image`, `favicon.ico`) from auth checks, reducing processing overhead.
